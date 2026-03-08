@@ -154,7 +154,7 @@ def main():
             payload = {
                 "name": item["name"],
                 "description": item["description"],
-                "unitPrice": item["unitPrice"],
+                "retailPrice": item["unitPrice"],
                 "unit": item["unit"],
                 "categoryId": category_id
             }

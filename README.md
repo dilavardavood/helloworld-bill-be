@@ -34,6 +34,19 @@ Flask + MySQL backend for SecureBill.
    python run.py
    ```
    Server will run on `http://localhost:5000`.
+   
+## How to Kill Backend Processes (Windows)
+If the server is stuck or already running, use these commands to terminate:
+```powershell
+# 1. Check for running python processes
+tasklist /FI "IMAGENAME eq python.exe"
+
+# 2. Check if port 5000 is in use
+netstat -ano | findstr :5000
+
+# 3. Forcefully kill all python processes
+taskkill /F /IM python.exe /T
+```
 
 ## Verification
 Run the verification script to test the APIs:

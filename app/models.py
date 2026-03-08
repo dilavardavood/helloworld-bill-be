@@ -40,12 +40,32 @@ class Category(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    products = db.relationship('Product', backref='category', lazy=True)
+    sub_categories = db.relationship('SubCategory', backref='category', lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
+            'subCategories': [sc.to_dict() for sc in self.sub_categories],
+            'createdAt': self.created_at.isoformat()
+        }
+
+class SubCategory(db.Model):
+    __tablename__ = 'sub_categories'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    name = db.Column(db.String(100), nullable=False)
+    category_id = db.Column(db.String(36), db.ForeignKey('categories.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    products = db.relationship('Product', backref='sub_category', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'categoryId': self.category_id,
             'createdAt': self.created_at.isoformat()
         }
 
@@ -55,10 +75,12 @@ class Product(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    unit_price = db.Column(db.Numeric(10, 2), nullable=False)
+    retail_price = db.Column(db.Numeric(10, 2), nullable=False)
     direct_price = db.Column(db.Numeric(10, 2), default=0.0)
+    gst_percentage = db.Column(db.Numeric(5, 2), default=0.0)
     unit = db.Column(db.String(20), nullable=False) # e.g., 'kg', 'pcs'
-    category_id = db.Column(db.String(36), db.ForeignKey('categories.id'), nullable=True)
+    brand_name = db.Column(db.String(100), nullable=True)
+    subcategory_id = db.Column(db.String(36), db.ForeignKey('sub_categories.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -66,10 +88,39 @@ class Product(db.Model):
             'id': self.id,
             'name': self.name,
             'description': self.description,
-            'unitPrice': float(self.unit_price),
-            'directPrice': float(self.direct_price) if self.direct_price else 0.0,
+            'retailPrice': float(self.retail_price or 0.0),
+            'directPrice': float(self.direct_price or 0.0),
+            'gstPercentage': float(self.gst_percentage or 0.0),
             'unit': self.unit,
-            'categoryId': self.category_id,
+            'brandName': self.brand_name,
+            'subCategoryName': self.sub_category.name if self.sub_category else None,
+            'subCategoryId': self.subcategory_id,
+            'categoryName': self.sub_category.category.name if self.sub_category and self.sub_category.category else None,
+            'categoryId': self.sub_category.category_id if self.sub_category else None,
+            'createdAt': self.created_at.isoformat()
+        }
+
+class Service(db.Model):
+    __tablename__ = 'services'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    retail_price = db.Column(db.Numeric(10, 2), nullable=False)
+    direct_price = db.Column(db.Numeric(10, 2), default=0.0) # Labor cost
+    gst_percentage = db.Column(db.Numeric(5, 2), default=0.0)
+    unit = db.Column(db.String(20), nullable=False) # e.g., 'job', 'visit'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'retailPrice': float(self.retail_price or 0.0),
+            'directPrice': float(self.direct_price or 0.0),
+            'gstPercentage': float(self.gst_percentage or 0.0),
+            'unit': self.unit,
             'createdAt': self.created_at.isoformat()
         }
 
@@ -89,6 +140,8 @@ class Invoice(db.Model):
     discount = db.Column(db.Numeric(10, 2), default=0.0)
     discount_type = db.Column(db.String(20), default='percentage') # percentage or fixed
     total = db.Column(db.Numeric(10, 2), default=0.0)
+    payment_received = db.Column(db.Numeric(10, 2), default=0.0)
+    status = db.Column(db.String(20), default='Enquiry') # 'Enquiry', 'Confirmed', 'Completed'
     notes = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -106,15 +159,19 @@ class Invoice(db.Model):
                 'address': self.customer_address,
                 'phone': self.customer_phone
             },
-            'subtotal': float(self.subtotal),
-            'gstRate': float(self.gst_rate),
-            'gstAmount': float(self.gst_amount),
-            'discount': float(self.discount),
+            'subtotal': float(self.subtotal or 0),
+            'gstRate': float(self.gst_rate or 0),
+            'gstAmount': float(self.gst_amount or 0),
+            'discount': float(self.discount or 0),
             'discountType': self.discount_type,
-            'total': float(self.total),
+            'total': float(self.total or 0),
+            'paymentReceived': float(self.payment_received or 0),
+            'status': self.status or 'Enquiry',
             'notes': self.notes,
             'lineItems': [item.to_dict() for item in self.line_items],
-            'createdAt': self.created_at.isoformat()
+            'createdAt': self.created_at.isoformat(),
+            'calculatedExpense': float(sum(float(it.quantity or 0) * float(it.direct_price or 0) for it in self.line_items)),
+            'calculatedProfit': float((float(self.subtotal or 0) - float(self.discount or 0)) - sum(float(it.quantity or 0) * float(it.direct_price or 0) for it in self.line_items))
         }
 
 class InvoiceItem(db.Model):
@@ -123,24 +180,32 @@ class InvoiceItem(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     invoice_id = db.Column(db.String(36), db.ForeignKey('invoices.id'), nullable=False)
     
-    category_id = db.Column(db.String(36), nullable=True) # Nullable for custom items
-    product_id = db.Column(db.String(36), nullable=True)  # Nullable for custom items
+    subcategory_id = db.Column(db.String(36), nullable=True) # Nullable for custom items or services
+    product_id = db.Column(db.String(36), nullable=True)  # Nullable for custom items or services
+    service_id = db.Column(db.String(36), nullable=True) # Link to Service
     product_name = db.Column(db.String(200), nullable=False)
     
     quantity = db.Column(db.Numeric(10, 2), nullable=False)
-    unit_price = db.Column(db.Numeric(10, 2), nullable=False)
+    retail_price = db.Column(db.Numeric(10, 2), nullable=False)
+    direct_price = db.Column(db.Numeric(10, 2), default=0.0)
+    gst_percentage = db.Column(db.Numeric(5, 2), default=0.0)
     unit = db.Column(db.String(20), nullable=True)
+    brand_name = db.Column(db.String(100), nullable=True)
     is_custom = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
             'id': self.id,
-            'categoryId': self.category_id,
+            'subCategoryId': self.subcategory_id,
             'productId': self.product_id,
+            'serviceId': self.service_id,
             'productName': self.product_name,
             'quantity': float(self.quantity),
-            'unitPrice': float(self.unit_price),
+            'retailPrice': float(self.retail_price or 0),
+            'directPrice': float(self.direct_price or 0),
+            'gstPercentage': float(self.gst_percentage or 0),
             'unit': self.unit,
+            'brandName': self.brand_name,
             'isCustom': self.is_custom
         }
 

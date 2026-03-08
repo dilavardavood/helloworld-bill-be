@@ -12,17 +12,19 @@ def get_products():
 @products_bp.route('', methods=['POST'])
 def create_product():
     data = request.get_json()
-    required = ['name', 'unitPrice', 'unit']
+    required = ['name', 'retailPrice', 'unit']
     if not data or any(field not in data for field in required):
         return jsonify({'error': 'Missing required fields'}), 400
     
     new_product = Product(
         name=data['name'],
         description=data.get('description'),
-        unit_price=data['unitPrice'],
+        retail_price=data['retailPrice'],
         direct_price=data.get('directPrice', 0.0),
+        gst_percentage=data.get('gstPercentage', 0.0),
         unit=data['unit'],
-        category_id=data.get('categoryId')
+        brand_name=data.get('brandName'),
+        subcategory_id=data.get('subCategoryId')
     )
     
     db.session.add(new_product)
@@ -37,10 +39,12 @@ def update_product(id):
     
     if 'name' in data: product.name = data['name']
     if 'description' in data: product.description = data['description']
-    if 'unitPrice' in data: product.unit_price = data['unitPrice']
+    if 'retailPrice' in data: product.retail_price = data['retailPrice']
     if 'directPrice' in data: product.direct_price = data['directPrice']
+    if 'gstPercentage' in data: product.gst_percentage = data['gstPercentage']
     if 'unit' in data: product.unit = data['unit']
-    if 'categoryId' in data: product.category_id = data['categoryId']
+    if 'brandName' in data: product.brand_name = data['brandName']
+    if 'subCategoryId' in data: product.subcategory_id = data['subCategoryId']
     
     db.session.commit()
     return jsonify(product.to_dict())
