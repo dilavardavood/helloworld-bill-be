@@ -29,6 +29,9 @@ def create_app(config_name='default'):
 
     from app.modules.services.routes import services_bp
     app.register_blueprint(services_bp, url_prefix='/api/services')
+
+    from app.modules.brands.routes import brands_bp
+    app.register_blueprint(brands_bp, url_prefix='/api/brands')
     
     @app.route('/health')
     def health_check():

@@ -117,8 +117,11 @@ curl -X POST http://localhost:5000/api/products \
     "directPrice": 2900.00,
     "gstPercentage": 18.0,
     "unit": "nos",
-    "brandName": "Hikvision",
-    "subCategoryId": "<SUBCATEGORY_ID>"
+    "brandId": "<BRAND_ID>",
+    "subCategoryId": "<SUBCATEGORY_ID>",
+    "imageUrl": "https://example.com/product-image.png",
+    "modelNumber": "MODEL-123",
+    "serialNumber": "SN-456"
   }'
 ```
 
@@ -141,7 +144,51 @@ curl -X DELETE http://localhost:5000/api/products/<PRODUCT_ID>
 
 ---
 
-## 4. Services API
+## 4. Brands API
+
+### Get All Brands
+*Retrieve a list of all brands.*
+```bash
+curl -X GET http://localhost:5000/api/brands
+```
+
+### Get Single Brand
+*Retrieve details for a specific brand.*
+```bash
+curl -X GET http://localhost:5000/api/brands/<BRAND_ID>
+```
+
+### Create Brand
+*Create a new brand.*
+```bash
+curl -X POST http://localhost:5000/api/brands \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Hikvision",
+    "logoUrl": "https://example.com/hikvision-logo.png"
+  }'
+```
+
+### Update Brand
+*Modify brand details.*
+```bash
+curl -X PUT http://localhost:5000/api/brands/<BRAND_ID> \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Brand Name",
+    "logoUrl": "https://example.com/new-logo.png"
+  }'
+```
+
+### Delete Brand
+*Delete a brand (ensure no products are linked).*
+```bash
+curl -X DELETE http://localhost:5000/api/brands/<BRAND_ID>
+```
+
+---
+
+## 5. Services API
 
 ### Get All Services
 *Retrieve all available services (Installation, Maintenance, etc.).*
@@ -182,7 +229,7 @@ curl -X DELETE http://localhost:5000/api/services/<SERVICE_ID>
 
 ---
 
-## 5. Invoices API
+## 6. Invoices API
 
 ### Get All Invoices
 *Retrieve all saved bills, including calculated profit and expense for each.*
@@ -280,7 +327,7 @@ curl -X DELETE http://localhost:5000/api/invoices/<INVOICE_ID>
 
 ---
 
-## 5. Company Details API
+## 7. Company Details API
 
 ### Get Company Details
 *Retrieve business details like bank info and GST number.*

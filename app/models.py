@@ -69,6 +69,25 @@ class SubCategory(db.Model):
             'createdAt': self.created_at.isoformat()
         }
 
+class Brand(db.Model):
+    __tablename__ = 'brands'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    name = db.Column(db.String(100), nullable=False)
+    logo_url = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    products = db.relationship('Product', backref='brand', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'logoUrl': self.logo_url,
+            'createdAt': self.created_at.isoformat()
+        }
+
 class Product(db.Model):
     __tablename__ = 'products'
 
@@ -79,8 +98,11 @@ class Product(db.Model):
     direct_price = db.Column(db.Numeric(10, 2), default=0.0)
     gst_percentage = db.Column(db.Numeric(5, 2), default=0.0)
     unit = db.Column(db.String(20), nullable=False) # e.g., 'kg', 'pcs'
-    brand_name = db.Column(db.String(100), nullable=True)
+    brand_id = db.Column(db.String(36), db.ForeignKey('brands.id'), nullable=True)
     subcategory_id = db.Column(db.String(36), db.ForeignKey('sub_categories.id'), nullable=True)
+    image_url = db.Column(db.String(255), nullable=True)
+    model_number = db.Column(db.String(100), nullable=True)
+    serial_number = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -92,11 +114,15 @@ class Product(db.Model):
             'directPrice': float(self.direct_price or 0.0),
             'gstPercentage': float(self.gst_percentage or 0.0),
             'unit': self.unit,
-            'brandName': self.brand_name,
+            'brandId': self.brand_id,
+            'brandName': self.brand.name if self.brand else None,
             'subCategoryName': self.sub_category.name if self.sub_category else None,
             'subCategoryId': self.subcategory_id,
             'categoryName': self.sub_category.category.name if self.sub_category and self.sub_category.category else None,
             'categoryId': self.sub_category.category_id if self.sub_category else None,
+            'imageUrl': self.image_url,
+            'modelNumber': self.model_number,
+            'serialNumber': self.serial_number,
             'createdAt': self.created_at.isoformat()
         }
 
@@ -181,9 +207,11 @@ class InvoiceItem(db.Model):
     invoice_id = db.Column(db.String(36), db.ForeignKey('invoices.id'), nullable=False)
     
     subcategory_id = db.Column(db.String(36), nullable=True) # Nullable for custom items or services
+    subcategory_name = db.Column(db.String(100), nullable=True)
     product_id = db.Column(db.String(36), nullable=True)  # Nullable for custom items or services
     service_id = db.Column(db.String(36), nullable=True) # Link to Service
     product_name = db.Column(db.String(200), nullable=False)
+    category_name = db.Column(db.String(100), nullable=True)
     
     quantity = db.Column(db.Numeric(10, 2), nullable=False)
     retail_price = db.Column(db.Numeric(10, 2), nullable=False)
@@ -197,6 +225,9 @@ class InvoiceItem(db.Model):
         return {
             'id': self.id,
             'subCategoryId': self.subcategory_id,
+            'subCategoryName': self.subcategory_name,
+            'categoryId': None, # Front-end usually derives this or doesn't need ID
+            'categoryName': self.category_name,
             'productId': self.product_id,
             'serviceId': self.service_id,
             'productName': self.product_name,

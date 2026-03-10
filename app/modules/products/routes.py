@@ -23,8 +23,11 @@ def create_product():
         direct_price=data.get('directPrice', 0.0),
         gst_percentage=data.get('gstPercentage', 0.0),
         unit=data['unit'],
-        brand_name=data.get('brandName'),
-        subcategory_id=data.get('subCategoryId')
+        brand_id=data.get('brandId'),
+        subcategory_id=data.get('subCategoryId'),
+        image_url=data.get('imageUrl'),
+        model_number=data.get('modelNumber'),
+        serial_number=data.get('serialNumber')
     )
     
     db.session.add(new_product)
@@ -43,8 +46,11 @@ def update_product(id):
     if 'directPrice' in data: product.direct_price = data['directPrice']
     if 'gstPercentage' in data: product.gst_percentage = data['gstPercentage']
     if 'unit' in data: product.unit = data['unit']
-    if 'brandName' in data: product.brand_name = data['brandName']
+    if 'brandId' in data: product.brand_id = data['brandId']
     if 'subCategoryId' in data: product.subcategory_id = data['subCategoryId']
+    if 'imageUrl' in data: product.image_url = data['imageUrl']
+    if 'modelNumber' in data: product.model_number = data['modelNumber']
+    if 'serialNumber' in data: product.serial_number = data['serialNumber']
     
     db.session.commit()
     return jsonify(product.to_dict())

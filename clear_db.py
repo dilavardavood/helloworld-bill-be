@@ -7,7 +7,7 @@ with app.app_context():
     print("🧹 Clearing database...")
     try:
         # Delete in order of dependencies
-        from app.models import InvoiceItem, Invoice, Product, Category
+        from app.models import InvoiceItem, Invoice, Product, SubCategory, Category
         
         print("Deleting InvoiceItems...")
         db.session.query(InvoiceItem).delete()
@@ -15,6 +15,8 @@ with app.app_context():
         db.session.query(Invoice).delete()
         print("Deleting Products...")
         db.session.query(Product).delete()
+        print("Deleting SubCategories...")
+        db.session.query(SubCategory).delete()
         print("Deleting Categories...")
         db.session.query(Category).delete()
         

@@ -126,9 +126,11 @@ def create_invoice():
             item = InvoiceItem(
                 invoice_id=invoice.id,
                 subcategory_id=item_data.get('subCategoryId'),
+                subcategory_name=item_data.get('subCategoryName'),
                 product_id=item_data.get('productId'),
                 service_id=item_data.get('serviceId'),
                 product_name=item_data['productName'],
+                category_name=item_data.get('categoryName'),
                 quantity=item_data['quantity'],
                 retail_price=item_data['retailPrice'],
                 direct_price=d_price or 0.0,
@@ -189,9 +191,11 @@ def update_invoice(id):
                 item = InvoiceItem(
                     invoice_id=invoice.id,
                     subcategory_id=item_data.get('subCategoryId'),
+                    subcategory_name=item_data.get('subCategoryName'),
                     product_id=item_data.get('productId'),
                     service_id=item_data.get('serviceId'),
                     product_name=item_data['productName'],
+                    category_name=item_data.get('categoryName'),
                     quantity=item_data['quantity'],
                     retail_price=item_data['retailPrice'],
                     direct_price=d_price or 0.0,
